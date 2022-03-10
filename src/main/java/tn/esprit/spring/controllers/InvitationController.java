@@ -10,8 +10,7 @@ import org.springframework.ui.Model;
 
 
 import com.google.zxing.WriterException;
-
-
+import com.vonage.client.VonageClient;
 
 import javax.websocket.server.PathParam;
 
@@ -222,7 +221,7 @@ public class InvitationController {
 
 
 	
-
+/*
 
 	@PostMapping("/addInvitation")
 	@ResponseBody
@@ -230,10 +229,10 @@ public class InvitationController {
 	{
 		
 		
-		cs.addInvitation(c, idUsers);}
+		cs.addInvitation(c, idUsers);}*/
 	
 	
-	/*
+	
 	@PutMapping("/addInvitation")
 	public ResponseEntity<Invitation> addInvitation(@RequestBody Invitation c,@RequestParam(value="idUsers") List<Long> idUsers) {
 

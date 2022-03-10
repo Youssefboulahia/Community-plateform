@@ -30,7 +30,7 @@ import lombok.ToString;
 
 @Getter
 @Setter
-@ToString
+//@ToString
 @RequiredArgsConstructor
 @Entity
 public class User implements Serializable{

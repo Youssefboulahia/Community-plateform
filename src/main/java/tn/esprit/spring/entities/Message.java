@@ -31,5 +31,5 @@ public class Message implements Serializable{
 	private Date date;
 	
 	@ManyToOne
-    private User user;
+    private UserAuth user;
 }

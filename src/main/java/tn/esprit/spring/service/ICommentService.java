@@ -16,4 +16,6 @@ public List<Comment> retrieveAllComment();
 	public Comment updateComment(Comment c, Long id, Long idUser);
 	
 	public Optional<Comment> retrieveCommentById(Long idComment);
+	
+	public List<Object[]> retrieveCommentByIdPost(Long idPost);
 }

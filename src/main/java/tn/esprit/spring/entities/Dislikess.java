@@ -38,7 +38,7 @@ public class Dislikess implements Serializable{
 	private Date date;
 	@JsonIgnore
 	@ManyToOne
-    private User user;
+    private UserAuth user;
 	
 	@JsonIgnore
 	@ManyToOne

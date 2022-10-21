@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,6 +22,7 @@ import tn.esprit.spring.service.ICommentService;
 
 @RestController 
 @RequestMapping("/comment") 
+@CrossOrigin
 public class CommentController {
 	
 	@Autowired
@@ -64,6 +66,12 @@ public class CommentController {
 	@ResponseBody 
 	public Optional<Comment> retrieveCommentById(@PathVariable Long idComment) {
 		return commentService.retrieveCommentById(idComment);
+	}
+	
+	@GetMapping("/retrieveByPost/{idPost}") 
+	@ResponseBody 
+	public List<Object[]> retrieveCommentByIdPost(@PathVariable Long idPost) {
+		return commentService.retrieveCommentByIdPost(idPost);
 	}
 
 }

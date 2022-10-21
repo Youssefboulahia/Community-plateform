@@ -47,8 +47,8 @@ public class Comment implements Serializable {
 	@OneToMany(cascade = CascadeType.ALL, mappedBy="comment")
 	private Set<SubComment> subComments ;
 	
-	@JsonIgnore
+	
 	@ManyToOne
-    private User user;
+    private UserAuth user;
 
 }

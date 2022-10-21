@@ -12,8 +12,10 @@ import org.springframework.stereotype.Service;
 import tn.esprit.spring.entities.Comment;
 import tn.esprit.spring.entities.SubComment;
 import tn.esprit.spring.entities.User;
+import tn.esprit.spring.entities.UserAuth;
 import tn.esprit.spring.repository.CommentRepository;
 import tn.esprit.spring.repository.SubCommentRepository;
+import tn.esprit.spring.repository.UserAuthRepository;
 import tn.esprit.spring.repository.UserRepository;
 
 @Service
@@ -24,7 +26,7 @@ public class SubCommentService implements ISubCommentService{
 	@Autowired 
 	SubCommentRepository subCommentRepository;
 	@Autowired 
-	UserRepository userRepository;
+	UserAuthRepository userRepository;
 
 	@Override
 	public List<SubComment> retrieveAllSubComment() {
@@ -34,7 +36,7 @@ public class SubCommentService implements ISubCommentService{
 	@Override
 	public SubComment addSubComment(SubComment c, Long idSubComment, Long idUser) {
 		Comment comment = commentRepository.getById(idSubComment);
-		User user = userRepository.getById(idUser);
+		UserAuth user = userRepository.getById(idUser);
 		c.setComment(comment);
 		c.setUser(user);
 		c.setDate(Date.from(LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant()));
@@ -44,7 +46,7 @@ public class SubCommentService implements ISubCommentService{
 	@Override
 	public void deleteSubComment(Long idSubComment, Long idUser) {
 		SubComment subComment = subCommentRepository.getById(idSubComment);
-		if(subComment.getUser().getIdUser()==idUser || subComment.getComment().getPost().getUser().getIdUser()==idUser)
+		if(subComment.getUser().getId()==idUser || subComment.getComment().getPost().getUser().getId()==idUser)
 		{
 		subCommentRepository.deleteById(idSubComment);
 		}
@@ -54,7 +56,7 @@ public class SubCommentService implements ISubCommentService{
 	@Override
 	public SubComment updateSubComment(SubComment c, Long id, Long idUser) {
 		SubComment subCommentMain = subCommentRepository.getById(id);
-		if(subCommentMain.getUser().getIdUser()==idUser || subCommentMain.getComment().getPost().getUser().getIdUser()==idUser)
+		if(subCommentMain.getUser().getId()==idUser || subCommentMain.getComment().getPost().getUser().getId()==idUser)
 		{
 		SubComment subComment = subCommentRepository.getById(id);
 		subComment.setText(c.getText());

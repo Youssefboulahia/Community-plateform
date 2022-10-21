@@ -40,6 +40,6 @@ public class SubComment implements Serializable {
 	
 	@JsonIgnore
 	@ManyToOne
-    private User user;
+    private UserAuth user;
 
 }

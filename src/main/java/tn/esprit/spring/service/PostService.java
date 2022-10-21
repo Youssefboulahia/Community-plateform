@@ -1,6 +1,9 @@
 package tn.esprit.spring.service;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.time.LocalDate;
+
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,18 +12,24 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.DataFormatException;
+import java.util.zip.Deflater;
+import java.util.zip.Inflater;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import tn.esprit.spring.entities.Dislikess;
 import tn.esprit.spring.entities.Likess;
 import tn.esprit.spring.entities.Post;
 import tn.esprit.spring.entities.User;
+import tn.esprit.spring.entities.UserAuth;
 import tn.esprit.spring.repository.DislikessRepository;
 import tn.esprit.spring.repository.LikessRepository;
 import tn.esprit.spring.repository.PostRepository;
+import tn.esprit.spring.repository.UserAuthRepository;
 import tn.esprit.spring.repository.UserRepository;
 
 @Service
@@ -28,10 +37,10 @@ public class PostService implements IPostService {
 	
 	@Autowired 
 	PostRepository postRepository;
+	
 	@Autowired 
-	UserRepository userRepository;
-	@Autowired 
-	UserService userService;
+	UserAuthRepository userAuthRepository;
+	
 	@Autowired 
 	LikessRepository likessRepository;
 	@Autowired 
@@ -43,21 +52,33 @@ public class PostService implements IPostService {
 	
 	@Override
 	public List<Post> retrieveAllPost() {
-		return (List<Post>) postRepository.findAll();
+		 List<Post> l = postRepository.findAll();
+		 for (Post p : l) {
+			 p.setPicByte(p.getPicByte());
+		 }
+		 return l;
 	}
 
 	@Override
-	public Post addPost(Post p, Long idUser) {
-		User user = userRepository.getById(idUser);
+	public Post addPost(Post p, Long idUser, MultipartFile file) {
+		UserAuth user = userAuthRepository.getById(idUser);
 		p.setUser(user);
 		p.setDate(Date.from(LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant()));
+		
+		p.setName(file.getOriginalFilename());
+		p.setType(file.getContentType());
+		try {
+			p.setPicByte(file.getBytes());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		return postRepository.save(p);
 	}
 
 	@Override
 	public void deletePost(Long idPost, Long idUser) {
 		Post post = postRepository.getById(idPost);
-		if(post.getUser().getIdUser()==idUser)
+		if(post.getUser().getId()==idUser)
 		{
 			postRepository.deleteById(idPost);
 		}
@@ -66,34 +87,47 @@ public class PostService implements IPostService {
 	}
 
 	@Override
-	public Post updatePost(Post p, Long id, Long idUser) {
-		Post postMain = postRepository.getById(id);
-		if(postMain.getUser().getIdUser()==idUser)
-		{
-		Post post = postRepository.getById(id);
-		post.setContent(p.getContent());
-		post.setSubject(p.getSubject());
-		post.setLikes(p.getLikes());
-		post.setDislikes(p.getDislikes());
-		post.setViews(p.getViews());
-		return postRepository.save(post);
-		}else{
-			return postMain;
+	public Post updatePost(Post p, Long id, Long idUser,  MultipartFile file) {
+		
+	
+		p.setName(file.getOriginalFilename());
+		p.setType(file.getContentType());
+		try {
+			p.setPicByte(file.getBytes());
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 		
+		return postRepository.save(p);
 	}
+	
+	@Override
+	public Post updatePostNoPic(Post p, Long id, Long idUser) {
+		
+		
+		return postRepository.save(p);
+	}
+		
+	
 
 	@Override
 	public Post retrievePostById(Long idPost) {
 		Post postMain = postRepository.getById(idPost);
 		postMain.setViews(postMain.getViews()+1);
+		
 		return postRepository.save(postMain);
 	
 	}
+	
+	@Override
+	public List<Post> findByUser_Id(Long id)
+	{
+		return postRepository.findByUserId(id);
+	}
 
 	@Override
-	public void likePost(Long idPost, long idUser) {
-		User user = userRepository.getById(idUser);
+	public String likePost(Long idPost, long idUser) {
+		UserAuth user = userAuthRepository.getById(idUser);
 		Post post = postRepository.getById(idPost);
 		Likess l = likessRepository.findByPostAndUser(post, user);
 		Dislikess d = dislikessRepository.findByPostAndUser(post, user);
@@ -108,6 +142,7 @@ public class PostService implements IPostService {
 				likessRepository.save(newLike);
 				post.setLikes(post.getLikes()+1);
 				postRepository.save(post);
+				return("make like");
 			}
 			else{
 				//remove dislike
@@ -122,6 +157,7 @@ public class PostService implements IPostService {
 				likessRepository.save(newLike);
 				post.setLikes(post.getLikes()+1);
 				postRepository.save(post);
+				return("remove dislike make like");
 			}
 			
 		}else{
@@ -129,6 +165,7 @@ public class PostService implements IPostService {
 			likessRepository.deleteById(l.getIdLike());
 			post.setLikes(post.getLikes()-1);
 			postRepository.save(post);
+			return("remove like");
 		}
 		
 	}
@@ -136,8 +173,8 @@ public class PostService implements IPostService {
 	//dislike
 	
 	@Override
-	public void dislikePost(Long idPost, long idUser) {
-		User user = userRepository.getById(idUser);
+	public String dislikePost(Long idPost, long idUser) {
+		UserAuth user = userAuthRepository.getById(idUser);
 		Post post = postRepository.getById(idPost);
 		Dislikess d = dislikessRepository.findByPostAndUser(post, user);
 		Likess l = likessRepository.findByPostAndUser(post, user);
@@ -152,6 +189,7 @@ public class PostService implements IPostService {
 				dislikessRepository.save(newDislike);
 				post.setDislikes(post.getDislikes()+1);
 				postRepository.save(post);
+				return("make dislike");
 			}
 			else{
 				//remove like
@@ -166,30 +204,52 @@ public class PostService implements IPostService {
 				dislikessRepository.save(newDislike);
 				post.setDislikes(post.getDislikes()+1);
 				postRepository.save(post);
+				return("remove like make dislike");
 			}
 		}else{
 			//remove dislike
 			dislikessRepository.deleteById(d.getIdDislike());
 			post.setDislikes(post.getDislikes()-1);
 			postRepository.save(post);
+			return("remove dislike");
 		}
 		
 	}
 	
+	@Override
+	public Boolean checkLike(Long idPost, long idUser) {
+		UserAuth user = userAuthRepository.getById(idUser);
+		Post post = postRepository.getById(idPost);
+		Likess l = likessRepository.findByPostAndUser(post, user);
+		Dislikess d = dislikessRepository.findByPostAndUser(post, user);
+		
+		if(l==null){
+			return(false);}
+		else{
+			return(true);}
+		}
+	
+	@Override
+	public Boolean checkDislike(Long idPost, long idUser) {
+		UserAuth user = userAuthRepository.getById(idUser);
+		Post post = postRepository.getById(idPost);
+		Likess l = likessRepository.findByPostAndUser(post, user);
+		Dislikess d = dislikessRepository.findByPostAndUser(post, user);
+		
+		if(d==null){
+			return(false);}
+		else{
+			return(true);}
+		}
+	
 	
 	public List<Post> filterPost(String str){
+		
 		List<Post> l1 = postRepository.filterByContent(str);
 		List<Post> l2 = postRepository.filterBySubject(str);
 		
-		for(Post p1:l1){
-			for(Post p2:l2){
-				if(p1.getIdPost()!=p2.getIdPost()){
-					l2.add(p1);
-				}
-			
-			}
-		}
-		return l1;
+		
+		return l2;
 	}
 	
 	//employee of the month
@@ -212,7 +272,7 @@ public class PostService implements IPostService {
 		return dislikessRepository.countTotalDislikesByMonth(dateStart, dateEnd);
 	}
 	
-	@Scheduled(cron = "0 0 0 1 * *")
+	//@Scheduled(cron = "0 0 0 1 * *")
 	public List<Object> employeeOfTheMonth(){
 		List<Object[]> postMonth = limitFiveWithScore(postMonth(), 10);
 		List<Object[]> commentMonth = limitFiveWithScore(commentService.commentMonth(),8);
@@ -235,8 +295,8 @@ public class PostService implements IPostService {
 		}
 		List<Object> result = new ArrayList <Object>();
 		result.add(employeeOfTheMonth.get(1));
-		result.add(userService.retrieveUser(employeeOfTheMonth.get(0)));
-		
+		result.add(userAuthRepository.getById(employeeOfTheMonth.get(0)).getUsername());
+		result.add(userAuthRepository.getById(employeeOfTheMonth.get(0)).getId());
 		return result;
 	}
 	
@@ -286,6 +346,48 @@ public class PostService implements IPostService {
 		}
 		return false;
 	}
+	
+	
+	
+	
+	
+	
+	
+	// compress the image bytes before storing it in the database
+		public static byte[] compressBytes(byte[] data) {
+			Deflater deflater = new Deflater();
+			deflater.setInput(data);
+			deflater.finish();
+			ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
+			byte[] buffer = new byte[1024];
+			while (!deflater.finished()) {
+				int count = deflater.deflate(buffer);
+				outputStream.write(buffer, 0, count);
+			}
+			try {
+				outputStream.close();
+			} catch (IOException e) {
+			}
+			System.out.println("Compressed Image Byte Size - " + outputStream.toByteArray().length);
+			return outputStream.toByteArray();
+		}
+		// uncompress the image bytes before returning it to the angular application
+		public static byte[] decompressBytes(byte[] data) {
+			Inflater inflater = new Inflater();
+			inflater.setInput(data);
+			ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
+			byte[] buffer = new byte[1024];
+			try {
+				while (!inflater.finished()) {
+					int count = inflater.inflate(buffer);
+					outputStream.write(buffer, 0, count);
+				}
+				outputStream.close();
+			} catch (IOException ioe) {
+			} catch (DataFormatException e) {
+			}
+			return outputStream.toByteArray();
+		}
 	
 	
 

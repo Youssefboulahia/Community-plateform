@@ -1,6 +1,7 @@
 package tn.esprit.spring.controllers;
 
 import java.time.LocalDate;
+
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -9,14 +10,19 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import tn.esprit.spring.entities.Post;
 import tn.esprit.spring.entities.User;
@@ -27,6 +33,7 @@ import tn.esprit.spring.service.IPostService;
 
 @RestController 
 @RequestMapping("/post") 
+@CrossOrigin
 public class PostController {
 	
 	@Autowired
@@ -38,6 +45,7 @@ public class PostController {
 	
 	@Autowired
 	IPostService postService;
+	
 	
 	@GetMapping("/retrieveAll") 
 	@ResponseBody 
@@ -51,8 +59,8 @@ public class PostController {
 		return postService.employeeOfTheMonth();
 	}
 	
-	@GetMapping("/filter") 
-	public List<Post> filter(@RequestParam(name = "str") String str) {
+	@PostMapping("/filter") 
+	public List<Post> filter(@RequestBody String str) {
 		return postService.filterPost(str);
 	}
 	
@@ -80,10 +88,15 @@ public class PostController {
 		return dislikeRepo.countTotalDislikesByMonth(dateStart, dateEnd);
 	}
 
-	@PostMapping("/add/{idUser}") 
+	//consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE  }
+	@PostMapping(path="/add/{idUser}", consumes = {"multipart/form-data", MediaType.APPLICATION_JSON_VALUE }) 
 	@ResponseBody 
-	public Post addPost(@RequestBody Post p, @PathVariable Long idUser) {
-		return postService.addPost(p, idUser);
+	public Post addPost(@PathVariable Long idUser, @RequestPart("imageFile") MultipartFile file , @RequestPart("subject") String subject,@RequestPart("content") String content) {
+		Post p = new Post();
+		p.setSubject(subject);
+		p.setContent(content);
+		return postService.addPost(p, idUser,file);
+		
 	}
 
 	@PostMapping("/delete/{idPost}/{idUser}") 
@@ -92,10 +105,22 @@ public class PostController {
 		
 	}
 
-	@PostMapping("/update/{idPost}/{idUser}") 
+	@PostMapping(path="/update/{idPost}/{idUser}", consumes = {"multipart/form-data", MediaType.APPLICATION_JSON_VALUE }) 
 	@ResponseBody 
-	public Post updateMessage(@RequestBody Post p, @PathVariable Long idPost, @PathVariable Long idUser) {
-		return postService.updatePost(p, idPost, idUser);
+	public Post updateMessage( @PathVariable Long idPost, @PathVariable Long idUser, @RequestPart("imageFile") MultipartFile file, @RequestPart("subject") String subject,@RequestPart("content") String content) {
+		Post p = postService.retrievePostById(idPost);
+		p.setSubject(subject);
+		p.setContent(content);
+		return postService.updatePost(p, idPost, idUser, file);
+	}
+	
+	@PostMapping(path="/updateNoPic/{idPost}/{idUser}") 
+	@ResponseBody 
+	public Post updateNoPic( @PathVariable Long idPost, @PathVariable Long idUser,  @RequestPart("subject") String subject,@RequestPart("content") String content) {
+		Post p = postService.retrievePostById(idPost);
+		p.setSubject(subject);
+		p.setContent(content);
+		return postService.updatePostNoPic(p, idPost, idUser);
 	}
 
 	@GetMapping("/retrieveBy/{idPost}") 
@@ -104,16 +129,34 @@ public class PostController {
 		 return postService.retrievePostById(idPost);
 	}
 	
+	@GetMapping("/retrieveByUser/{idUser}") 
+	@ResponseBody 
+	public List<Post> retrieveByUser(@PathVariable Long idUser) {
+		 return postService.findByUser_Id(idUser);
+	}
+	
 	@PostMapping("/like/{idPost}/{idUser}") 
 	@ResponseBody 
-	public void likePost(@PathVariable Long idPost, @PathVariable Long idUser) {
-		 postService.likePost(idPost, idUser);
+	public String likePost(@PathVariable Long idPost, @PathVariable Long idUser) {
+		 return postService.likePost(idPost, idUser);
 	}
 	
 	@PostMapping("/dislike/{idPost}/{idUser}") 
 	@ResponseBody 
-	public void dislikePost(@PathVariable Long idPost, @PathVariable Long idUser) {
-		 postService.dislikePost(idPost, idUser);
+	public String dislikePost(@PathVariable Long idPost, @PathVariable Long idUser) {
+		 return postService.dislikePost(idPost, idUser);
+	}
+	
+	@GetMapping("/checkLike/{idPost}/{idUser}") 
+	@ResponseBody 
+	public Boolean checkLike(@PathVariable Long idPost, @PathVariable Long idUser) {
+		 return postService.checkLike(idPost, idUser);
+	}
+	
+	@GetMapping("/checkDislike/{idPost}/{idUser}") 
+	@ResponseBody 
+	public Boolean checkDislike(@PathVariable Long idPost, @PathVariable Long idUser) {
+		 return postService.checkDislike(idPost, idUser);
 	}
 
 }

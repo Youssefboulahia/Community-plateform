@@ -12,8 +12,10 @@ import org.springframework.stereotype.Service;
 import tn.esprit.spring.entities.Comment;
 import tn.esprit.spring.entities.Post;
 import tn.esprit.spring.entities.User;
+import tn.esprit.spring.entities.UserAuth;
 import tn.esprit.spring.repository.CommentRepository;
 import tn.esprit.spring.repository.PostRepository;
+import tn.esprit.spring.repository.UserAuthRepository;
 import tn.esprit.spring.repository.UserRepository;
 
 @Service
@@ -25,6 +27,8 @@ public class CommentService implements ICommentService{
 	PostRepository postRepository;
 	@Autowired 
 	UserRepository userRepository;
+	@Autowired 
+	UserAuthRepository userAuthRepository;
 
 	@Override
 	public List<Comment> retrieveAllComment() {
@@ -34,7 +38,7 @@ public class CommentService implements ICommentService{
 	@Override
 	public Comment addComment(Comment c, Long idPost, Long idUser) {
 		Post post = postRepository.getById(idPost);
-		User user = userRepository.getById(idUser);
+		UserAuth user = userAuthRepository.getById(idUser);
 		c.setPost(post);
 		c.setUser(user);
 		c.setDateComment(Date.from(LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant()));
@@ -45,7 +49,7 @@ public class CommentService implements ICommentService{
 	@Override
 	public void deleteComment(Long idComment,Long idUser) {
 		Comment comment = commentRepository.getById(idComment);
-		if(comment.getUser().getIdUser()==idUser || comment.getPost().getUser().getIdUser()==idUser)
+		if(comment.getUser().getId()==idUser || comment.getPost().getUser().getId()==idUser)
 		{
 		commentRepository.deleteById(idComment);
 		}
@@ -54,7 +58,7 @@ public class CommentService implements ICommentService{
 	@Override
 	public Comment updateComment(Comment c, Long id, Long idUser) {
 		Comment commentMain = commentRepository.getById(id);
-		if(commentMain.getUser().getIdUser()==idUser || commentMain.getPost().getUser().getIdUser()==idUser)
+		if(commentMain.getUser().getId()==idUser || commentMain.getPost().getUser().getId()==idUser)
 		{
 		Comment comment = commentRepository.getById(id);
 		comment.setText(c.getText());
@@ -74,6 +78,11 @@ public class CommentService implements ICommentService{
 		Date dateStart = Date.from(LocalDate.now().minusMonths(1).atStartOfDay(ZoneId.systemDefault()).toInstant());
 		Date dateEnd = Date.from(LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant());
 		return commentRepository.countTotalCommentsByMonth(dateStart, dateEnd);
+	}
+	
+	@Override
+	public List<Object[]> retrieveCommentByIdPost(Long idPost){
+		return  commentRepository.findByPostId(idPost);
 	}
 
 }

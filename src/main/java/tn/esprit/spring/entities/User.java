@@ -59,7 +59,6 @@ public class User implements Serializable{
 	private int scoreEvents;
 
 	@JsonManagedReference
-
 	@JsonIgnore
 	@OneToMany(cascade = CascadeType.ALL, mappedBy="user")
 	private Set<Post> posts ;
@@ -118,7 +117,7 @@ public class User implements Serializable{
 	@JsonManagedReference
 	@JsonIgnore
 	@ManyToMany(cascade=CascadeType.ALL, mappedBy="users")
-	private Set<Event> event;
+	private Set<Event> events;
 	
 	@JsonManagedReference
 	@JsonIgnore

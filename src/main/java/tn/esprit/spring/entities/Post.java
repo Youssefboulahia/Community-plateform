@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -32,6 +33,8 @@ public class Post implements Serializable {
 	@Id
 	@GeneratedValue (strategy = GenerationType.IDENTITY)
 	private long idPost;
+	
+	@Column(length = 65555)
 	private String content;
 	
 	private int  likes;
@@ -40,7 +43,14 @@ public class Post implements Serializable {
 	private String subject;
 	
 	
-	
+	@Column(name = "name")
+	private String name;
+	@Column(name = "type")
+	private String type;
+    //image bytes can have large lengths so we specify a value
+    //which is more than the default length for picByte column
+	@Column(name = "picByte", length = 1000)
+	private byte[] picByte;
 	
 	
 	
@@ -54,9 +64,9 @@ public class Post implements Serializable {
 	@OneToMany(cascade = CascadeType.ALL, mappedBy="post")
 	private Set<Comment> comments ;
 	
-	@JsonIgnore
+	
 	 @ManyToOne
-	    private User user;
+	    private UserAuth user;
 	
 	@JsonManagedReference
 	@JsonIgnore
